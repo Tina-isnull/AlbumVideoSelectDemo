@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.lcc.albumvideoselectdemo.PicVideoSelectActivity">
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/title_item" />
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_below="@+id/title"
+        android:id="@+id/recycler_id"
+        android:layout_above="@+id/btn_finish"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+    </android.support.v7.widget.RecyclerView>
+    <Button
+        android:id="@+id/btn_finish"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_height="50dp"
+        android:gravity="center"
+        android:text="完成"/>
+</RelativeLayout>

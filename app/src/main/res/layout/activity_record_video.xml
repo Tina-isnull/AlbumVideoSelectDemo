@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#f0f0f0"
+    android:orientation="vertical"
+    tools:context=".RecordVideoActivity">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.example.lcc.albumvideoselectdemo.bean.MovieRecorderView
+            android:id="@+id/movieRecorderView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/textView_release_to_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="50dp"
+                android:background="#70ad8748"
+                android:padding="2dp"
+                android:text="松开取消"
+                android:textColor="#ffffff"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/video_tip"
+                android:layout_width="148dp"
+                android:layout_height="45dp"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="14dp"
+                android:background="@mipmap/video_timelimit_guide" />
+
+        </RelativeLayout>
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#262626">
+
+        <RelativeLayout
+            android:id="@+id/rl_bottom_root"
+            android:layout_width="match_parent"
+            android:layout_height="160dp">
+
+            <ImageView
+                android:id="@+id/record_close"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginLeft="61dp"
+                android:layout_marginTop="36dp"
+                android:padding="15dp"
+                android:src="@mipmap/photo_close" />
+
+            <ImageView
+                android:id="@+id/record_flash"
+                android:layout_width="40dp"
+                android:layout_height="50dp"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="59dp"
+                android:layout_marginTop="47dp"
+                android:padding="10dp"
+                android:src="@mipmap/photo_shanguang_down"
+                 />
+
+            <!--<TextView-->
+            <!--android:id="@+id/textView_up_to_cancel"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_centerHorizontal="true"-->
+            <!--android:layout_marginTop="20dp"-->
+            <!--android:background="#33000000"-->
+            <!--android:text="上移取消"-->
+            <!--android:textColor="#ffffff"-->
+            <!--android:visibility="gone" />-->
+
+            <TextView
+                android:id="@+id/textView_count_down"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="11dp"
+                android:text="10.0s"
+                android:textColor="#707070"
+                android:textSize="14sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="6dp">
+
+                <ProgressBar
+                    android:id="@+id/progressBar_loading"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:minHeight="6dp"
+                    android:progressDrawable="@drawable/progressbar_video" />
+
+                <View
+                    android:layout_width="2dp"
+                    android:layout_height="6dp"
+                    android:layout_marginLeft="108dp"
+                    android:background="#ffffff" />
+
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <pl.droidsonroids.gif.GifImageView
+                    android:id="@+id/button_shoot"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="33dp"
+                    android:src="@mipmap/video_button_notclicked"
+                    android:textSize="14sp" />
+
+
+            </LinearLayout>
+            <TextView
+                android:layout_centerHorizontal="true"
+                android:id="@+id/record_notify_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="102dp"
+                android:text="按住开始录制"
+                android:textColor="#707070"
+                android:textSize="13sp" />
+
+        </RelativeLayout>
+    </FrameLayout>
+</LinearLayout>
