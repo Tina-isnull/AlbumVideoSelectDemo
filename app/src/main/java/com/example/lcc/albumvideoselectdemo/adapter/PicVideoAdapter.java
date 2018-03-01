@@ -16,9 +16,12 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.lcc.albumvideoselectdemo.PicVideoSelectActivity;
 import com.example.lcc.albumvideoselectdemo.R;
 import com.example.lcc.albumvideoselectdemo.bean.PicVideoBean;
+import com.example.lcc.albumvideoselectdemo.bean.TemBean;
 import com.example.lcc.albumvideoselectdemo.myInterface.ImageDisplayAdapter;
 import com.example.lcc.albumvideoselectdemo.utils.MyApp;
 import com.example.lcc.albumvideoselectdemo.utils.TimeFormat;
@@ -39,10 +42,11 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
     //select 1为图片 2为视频
     private int select;
     public static List<String> selectPics = new ArrayList<>();
+    public static List<TemBean> selectPics1 = new ArrayList<>();
     private ImageDisplayAdapter adapter;
 
-    public PicVideoAdapter(Context context, ArrayList<PicVideoBean> list,int select) {
-        newlist=new ArrayList<>();
+    public PicVideoAdapter(Context context, ArrayList<PicVideoBean> list, int select) {
+        newlist = new ArrayList<>();
         this.context = context;
         this.list = list;
         this.select = select;
@@ -78,10 +82,11 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
                 MyApp.getApp().getLoader().setImageResource(list.get(position).getPath(), holder.pic);
                 holder.time.setVisibility(View.GONE);
                 if (selectPics.contains(list.get(position).getPath())) {
+                    selectPics1.get(selectPics.indexOf(list.get(position).getPath())).setmPotion(position);
                     holder.button.setImageResource(R.drawable.select_shape);
                     holder.pic.setColorFilter(0x80000000);
-//                    holder.pager.setText((selectPics.indexOf(list.get(position).getPath())+1) + "");
-                    holder.pager.setText(list.get(position).getSelectNumber());
+                    holder.pager.setText((selectPics.indexOf(list.get(position).getPath()) + 1) + "");
+//                    holder.pager.setText(list.get(position).getSelectNumber());
 
                 } else {
                     holder.button.setImageResource(R.drawable.unselect_shape);
@@ -92,29 +97,48 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
                     @Override
                     public void onClick(View v) {
                         if (selectPics.contains(list.get(position).getPath())) {
+                            int start = selectPics.indexOf(list.get(position).getPath());
+                            selectPics1.remove(selectPics.indexOf(list.get(position).getPath()));
                             selectPics.remove(list.get(position).getPath());
                             holder.button.setImageResource(R.drawable.unselect_shape);
                             holder.pic.setColorFilter(null);
-                            newlist.clear();
-                            //数据要重置！！！！
-                            for(int i=0;i<list.size();i++){
-                                if(selectPics.contains(list.get(i).getPath())){
-                                    PicVideoBean bean=new PicVideoBean(list.get(i).getPath(),"",(selectPics.indexOf(list.get(i).getPath())+1)+"");
-                                    newlist.add(bean);
-                                }else {
-                                    PicVideoBean bean=new PicVideoBean(list.get(i).getPath(),"","");
-                                    newlist.add(bean);
+                            holder.pager.setText("");
+//                            newlist.clear();
+//                            //数据要重置！！！！
+//                            for(int i=0;i<list.size();i++){
+//                                if(selectPics.contains(list.get(i).getPath())){
+//                                    PicVideoBean bean=new PicVideoBean(list.get(i).getPath(),"",(selectPics.indexOf(list.get(i).getPath())+1)+"");
+//                                    newlist.add(bean);
+//                                }else {
+//                                    PicVideoBean bean=new PicVideoBean(list.get(i).getPath(),"","");
+//                                    newlist.add(bean);
+//                                }
+//                            }
+//                            adapter.notifyDataSetChanged(list, newlist);
+                            for (int i = start; i < selectPics1.size(); i++) {
+                                for(int j=1;j<list.size();j++){
+                                    if(list.get(j).getPath().equals(selectPics1.get(i).getmPath())){
+                                        Bundle bundle = new Bundle();
+                                        bundle.putString("number", (selectPics.indexOf(selectPics1.get(i).getmPath()) + 1) + "");
+                                        notifyItemChanged(selectPics1.get(i).getmPotion(), bundle);
+                                        continue;
+                                    }
                                 }
+
                             }
-                            adapter.notifyDataSetChanged(list, newlist);
 
                         } else {
+                            int selCount = selectPics.size();
+                            if (selCount >= 9) {
+                                Toast.makeText(context, "超过9张图了", Toast.LENGTH_LONG).show();
+                                return;
+                            }
                             selectPics.add(list.get(position).getPath());
+                            selectPics1.add(new TemBean(list.get(position).getPath(), position));
                             holder.button.setImageResource(R.drawable.select_shape);
                             holder.pic.setColorFilter(0x80000000);
-                            holder.pager.setText((selectPics.indexOf(list.get(position).getPath())+1) + "");
-                            //数据要重置！！！！
-                            list.get(position).setSelectNumber((selectPics.indexOf(list.get(position).getPath())+1) + "");
+                            holder.pager.setText((selectPics.indexOf(list.get(position).getPath()) + 1) + "");
+
                         }
                     }
                 });
@@ -147,12 +171,14 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
             onBindViewHolder(holder, position);
         else {
             Bundle bundle = (Bundle) payloads.get(0);
-            for (String key: bundle.keySet()){
-                switch (key){
-                    case "path":
-                        MyApp.getApp().getLoader().setImageResource(list.get(position).getPath(), holder.pic);
-                        break;
+            for (String key : bundle.keySet()) {
+                switch (key) {
+//                    case "path":
+//                        MyApp.getApp().getLoader().setImageResource(list.get(position).getPath(), holder.pic);
+//                        break;
                     case "number":
+                        holder.button.setImageResource(R.drawable.select_shape);
+                        holder.pic.setColorFilter(0x80000000);
                         holder.pager.setText((CharSequence) bundle.get(key));
                         break;
                 }
@@ -173,7 +199,8 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
             return 1;
         }
     }
-    public void setData(){
+
+    public void setData() {
         list.clear();
         list.addAll(newlist);
     }

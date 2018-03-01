@@ -1,6 +1,7 @@
 package com.example.lcc.albumvideoselectdemo;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.ColorDrawable;
@@ -9,6 +10,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,7 +23,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -30,11 +34,14 @@ import android.widget.Toast;
 import com.example.lcc.albumvideoselectdemo.adapter.AlbumListAdapter;
 import com.example.lcc.albumvideoselectdemo.adapter.BigPicAdapter;
 import com.example.lcc.albumvideoselectdemo.adapter.DiffCallBack;
+import com.example.lcc.albumvideoselectdemo.adapter.DisplayImageViewAdapter;
 import com.example.lcc.albumvideoselectdemo.adapter.PicVideoAdapter;
 import com.example.lcc.albumvideoselectdemo.bean.AlbumBean;
 import com.example.lcc.albumvideoselectdemo.bean.PicVideoBean;
+import com.example.lcc.albumvideoselectdemo.bean.TemBean;
 import com.example.lcc.albumvideoselectdemo.myInterface.ImageDisplayAdapter;
 import com.example.lcc.albumvideoselectdemo.utils.DataHelper;
+import com.example.lcc.albumvideoselectdemo.utils.MyApp;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,14 +66,17 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     private PopupWindow mPopwindow_pic;
     private AlbumListAdapter adapter;
     private BigPicAdapter mBigPicAdapter;
+    private PhotoAdapter mBigPicAdapter1;
     private ArrayList<PicVideoBean> bigPicList;
-    private final int MSG_WHAT_CHAT_UPDATE=0x1;
+    private List<Integer> refreshList = new ArrayList<>();
+    private final int MSG_WHAT_CHAT_UPDATE = 0x1;
+    //本来想用来局部刷新的，但是有更简单的办法了
     private Handler updateChatsHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what){
+            switch (msg.what) {
                 case MSG_WHAT_CHAT_UPDATE:
-                    DiffUtil.DiffResult result = (DiffUtil.DiffResult)msg.obj;
+                    DiffUtil.DiffResult result = (DiffUtil.DiffResult) msg.obj;
                     //界面更新
                     result.dispatchUpdatesTo(mAdapter);
                     mAdapter.setData();
@@ -81,22 +91,23 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
         setContentView(R.layout.activity_pic_video_select);
         helper = new DataHelper(this);
         mSelect = getIntent().getIntExtra("select", 0);
-        lists = new ArrayList<>();
-        Albums = new ArrayList<>();
-        bigPicList = new ArrayList<>();
-        adapter = new AlbumListAdapter(this, Albums);
+        lists = new ArrayList<>();//照片或者视频的数据集
+        Albums = new ArrayList<>();//相册的集合
+        bigPicList = new ArrayList<>();//显示大图
+        adapter = new AlbumListAdapter(this, Albums);//显示相册的adapter
         mBigPicAdapter = new BigPicAdapter(this, bigPicList);
+        mBigPicAdapter1 = new PhotoAdapter(this, bigPicList);//显示大图
         text_back = (TextView) findViewById(R.id.text_back);
         text_title = (TextView) findViewById(R.id.text_title);
         text_other = (TextView) findViewById(R.id.text_other);
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_id);
         mFinish = (Button) findViewById(R.id.btn_finish);
+        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_id);
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
 
         if (mSelect == 1) {
             text_title.setText("我的相册");
             helper.getPic(this);
-            mAdapter = new PicVideoAdapter(this, lists,1);
+            mAdapter = new PicVideoAdapter(this, lists, 1);
         } else {
             text_title.setText("我的视频");
             helper.getVideo(this);
@@ -108,6 +119,7 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
             public void onClick(View v) {
                 finish();
                 mAdapter.selectPics.clear();
+                mAdapter.selectPics1.clear();
 
             }
         });
@@ -134,6 +146,11 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
             public void onItemClick(int index, String path) {
                 if (path.equals("")) {
                     if (mSelect == 1) {
+                        int selCount = mAdapter.selectPics.size();
+                        if (selCount >= 9) {
+                            Toast.makeText(PicVideoSelectActivity.this, "超过9张图了", Toast.LENGTH_LONG).show();
+                            return;
+                        }
                         //相机
                         Intent intent = new Intent(PicVideoSelectActivity.this, LccameraActivity.class);
                         startActivity(intent);
@@ -144,10 +161,10 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
                     }
                 } else {
                     if (mSelect == 1) {
-                        //相机
-                        showBigPic(index);
+                        //查看大图
+                        showBigPic1(index);
                     } else {
-                        //视频
+                        //播放视频
                         Intent intent = new Intent(PicVideoSelectActivity.this, VideoPlayActivity.class);
                         intent.putExtra("path", path);
                         startActivity(intent);
@@ -155,13 +172,14 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
                 }
             }
 
+            //局部刷新，不用了
             @Override
             public void notifyDataSetChanged(final List<PicVideoBean> mOldDatas, final List<PicVideoBean> mNewDatas) {
                 //为了防止数据量过大，比对算法耗时，将算法放入新线程执行
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffCallBack(mOldDatas, mNewDatas),true);
+                        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffCallBack(mOldDatas, mNewDatas), true);
                         Message message = updateChatsHandler.obtainMessage(MSG_WHAT_CHAT_UPDATE);
                         message.obj = result;
                         message.sendToTarget();
@@ -179,13 +197,12 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
         //占第一位
         lists.clear();
         PicVideoBean bean1 = new PicVideoBean();
-        bean.add(0, bean1);
         lists.addAll(bean);
+        lists.add(0, bean1);
         //为查看大图赋值
         if (mSelect == 1) {
             bigPicList.addAll(lists);
             bigPicList.remove(0);
-            mBigPicAdapter.notifyDataSetChanged();
         }
         mAdapter.notifyDataSetChanged();
     }
@@ -194,19 +211,16 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     public void getPicOrVideo(Map<String, Object> bean) {
         Albums.clear();
         Albums.addAll((ArrayList<AlbumBean>) bean.get("album"));
-        adapter.notifyDataSetChanged();
 
         //占第一位
         lists.clear();
         PicVideoBean bean1 = new PicVideoBean("", "", "");
         ArrayList<PicVideoBean> picList = (ArrayList<PicVideoBean>) bean.get("pic");
-        picList.add(0, bean1);
         lists.addAll(picList);
+        lists.add(0, bean1);
         //为大图赋值
         bigPicList.addAll(lists);
         bigPicList.remove(0);
-        mBigPicAdapter.notifyDataSetChanged();
-
         mAdapter.notifyDataSetChanged();
 
 
@@ -232,7 +246,6 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
                 if (mPopwindow != null) {
                     mPopwindow.dismiss();
                 }
-
             }
         });
         if (mPopwindow == null) {
@@ -251,7 +264,7 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     }
 
     /**
-     * 显示大图
+     * 显示大图(初级)
      */
     public void showBigPic(final int position) {
         View view = getLayoutInflater().inflate(R.layout.pic_show, null);
@@ -269,9 +282,149 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
             mPopwindow_pic.showAtLocation(text_title, Gravity.TOP, 0, 0);
         }
     }
+
+    /**
+     * 显示大图
+     */
+    public void showBigPic1(final int position) {
+        refreshList.clear();
+        View view = getLayoutInflater().inflate(R.layout.show_big_pic, null);
+        final ViewPager mViewPager = (ViewPager) view.findViewById(R.id.viewpager_preview_photo);
+        final TextView checkbox_sel_num = (TextView) view.findViewById(R.id.pager_select);//已选相册的序数
+        final TextView complete = (TextView) view.findViewById(R.id.pre_tv_to_confirm);//完成数量
+        final ImageView mCheckBox = (ImageView) view.findViewById(R.id.button_id);
+        updateCountView(complete);
+        mViewPager.setAdapter(mBigPicAdapter1);
+        mViewPager.setCurrentItem(position - 1, true);
+        if (mAdapter.selectPics.contains(bigPicList.get(position-1).getPath())) {
+            mCheckBox.setImageResource(R.drawable.select_shape);
+            checkbox_sel_num.setVisibility(View.VISIBLE);
+            checkbox_sel_num.setText(String.valueOf(mAdapter.selectPics.indexOf(bigPicList.get(position-1).getPath()) + 1));
+        } else {
+            mCheckBox.setImageResource(R.drawable.unselect_shape);
+            checkbox_sel_num.setVisibility(View.INVISIBLE);
+        }
+        mCheckBox.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                int index = mViewPager.getCurrentItem();
+                boolean selFlag = mAdapter.selectPics.contains(bigPicList.get(index).getPath());
+                if (selFlag) {
+                    mAdapter.selectPics1.remove(mAdapter.selectPics.indexOf(bigPicList.get(index).getPath()));
+                    mAdapter.selectPics.remove(bigPicList.get(index).getPath());
+                    refreshList.add(index + 1);
+                    checkbox_sel_num.setVisibility(View.INVISIBLE);
+                    mCheckBox.setImageResource(R.drawable.unselect_shape);
+                } else {
+                    int selCount = mAdapter.selectPics.size();
+                    if (selCount >= 9) {
+                        Toast.makeText(PicVideoSelectActivity.this, "超过9张图了", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    mCheckBox.setImageResource(R.drawable.select_shape);
+                    checkbox_sel_num.setVisibility(View.VISIBLE);
+                    mAdapter.selectPics.add(bigPicList.get(index).getPath());
+                    mAdapter.selectPics1.add(new TemBean(bigPicList.get(index).getPath(), index + 1));
+                    checkbox_sel_num.setText(String.valueOf(mAdapter.selectPics.indexOf(bigPicList.get(index).getPath()) + 1));
+                }
+                updateCountView(complete);
+            }
+        });
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (mAdapter.selectPics.contains(bigPicList.get(position).getPath())) {
+                    mCheckBox.setImageResource(R.drawable.select_shape);
+                    checkbox_sel_num.setVisibility(View.VISIBLE);
+                    checkbox_sel_num.setText(String.valueOf(mAdapter.selectPics.indexOf(bigPicList.get(position).getPath()) + 1));
+                } else {
+                    mCheckBox.setImageResource(R.drawable.unselect_shape);
+                    checkbox_sel_num.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+        if (mPopwindow_pic == null) {
+            mPopwindow_pic = new PopupWindow(view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, true);
+            mPopwindow_pic.setOutsideTouchable(true);
+            mPopwindow_pic.setOnDismissListener(this);
+        }
+        if (mPopwindow_pic.isShowing()) {
+            mPopwindow_pic.dismiss();
+        } else {
+            mPopwindow_pic.showAtLocation(text_title, Gravity.TOP, 0, 0);
+        }
+    }
+
+
+    class PhotoAdapter extends PagerAdapter {
+        private List<PicVideoBean> imgList;
+
+        public PhotoAdapter(Context content, List<PicVideoBean> viewList) {
+            this.imgList = viewList;
+        }
+
+        @Override
+        public int getCount() {
+            return imgList.size();
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return view == object;
+        }
+
+        @Override
+        public View instantiateItem(ViewGroup container, int position) {
+            ImageView photoView = new ImageView(PicVideoSelectActivity.this);
+            container.addView(photoView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            MyApp.getApp().getLoader().setImageResource(imgList.get(position).getPath(), photoView);
+            return photoView;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            container.removeView((View) object);
+        }
+
+    }
+
+    private void updateCountView(TextView mCountText) {
+        if (mAdapter.selectPics.size() == 0) {
+            mCountText.setEnabled(false);
+            mCountText.setText("已选" + "(" + mAdapter.selectPics.size() + "/" + 9 + ")");
+        } else {
+            mCountText.setEnabled(true);
+            mCountText.setText("已选" + "(" + mAdapter.selectPics.size() + "/" + 9 + ")");
+        }
+    }
+
+
     @Override
     public void onDismiss() {
-        mAdapter.notifyDataSetChanged();
+        for (int i = 0; i < mAdapter.selectPics.size(); i++) {
+            for(int j=1;j<lists.size();j++){
+                if(lists.get(j).getPath().equals( mAdapter.selectPics.get(i))){
+                    Bundle bundle = new Bundle();
+                    bundle.putString("number", (mAdapter.selectPics.indexOf(mAdapter.selectPics1.get(i).getmPath()) + 1) + "");
+                    mAdapter.notifyItemChanged(mAdapter.selectPics1.get(i).getmPotion(), bundle);
+                    continue;
+                }
+            }
+
+        }
+        for (int i = 0; i < refreshList.size(); i++) {
+            mAdapter.notifyItemChanged(refreshList.get(i));
+        }
         mPopwindow_pic = null;
     }
 
@@ -279,5 +432,6 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     public void onBackPressed() {
         super.onBackPressed();
         mAdapter.selectPics.clear();
+        mAdapter.selectPics1.clear();
     }
 }

@@ -73,7 +73,7 @@ public class DataLoader {
                 if (temporary.containsKey(AlbumName)) {
                     temporary.get(AlbumName).addCount();
                 } else {
-                    AlbumBean bean = new AlbumBean(AlbumName, 0, mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA)));
+                    AlbumBean bean = new AlbumBean(AlbumName, 1, mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA)));
                     temporary.put(AlbumName, bean);
                     list.add(bean);
                 }
@@ -108,7 +108,7 @@ public class DataLoader {
         mCursor = mResolver.query(mPicTable, mColumns, mSelect1, mSelectArgs1, MediaStore.Images.Media.DATE_ADDED + " DESC");
 
         if (mCursor != null && mCursor.getCount() != 0) {
-            mCursor.moveToFirst();
+//            mCursor.moveToFirst();
             while (mCursor.moveToNext()) {
                 PicVideoBean bean = new PicVideoBean();
                 String path = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA));
@@ -139,7 +139,7 @@ public class DataLoader {
         String[] mSelectArgs = {"video/mp4", String.valueOf(VIDEO_TIME), String.valueOf(VIDEO_BIG_SIZE)};
         Cursor mCursor = mResolver.query(mVideoTable, mColumns, mSelect, mSelectArgs, MediaStore.Video.Media.DATE_ADDED + " DESC");
         if (null != mCursor && mCursor.getCount() != 0) {
-            mCursor.moveToFirst();
+//            mCursor.moveToFirst();
             while (mCursor.moveToNext()) {
                 PicVideoBean bean = new PicVideoBean();
                 bean.setPath(mCursor.getString(mCursor.getColumnIndex(MediaStore.Video.Media.DATA)));
@@ -154,40 +154,6 @@ public class DataLoader {
             mCursor = null;
         }
         return videos;
-    }
-
-
-    public ArrayList<AlbumBean> getVideoAlbum() {
-        ArrayList<AlbumBean> videoAlbum = new ArrayList<>();
-        HashMap<String, AlbumBean> temporary = new HashMap<>();
-        String[] mColumns = {MediaStore.Video.Media.DATA, MediaStore.Video.Media.DURATION};
-        String mSelect = MediaStore.Video.Media.MIME_TYPE + "=?AND " + MediaStore.Video.Media.DURATION + "<?AND " + MediaStore.Video.Media.SIZE + "<?";
-        String[] mSelectArgs = {"video/mp4", String.valueOf(VIDEO_TIME), String.valueOf(VIDEO_BIG_SIZE)};
-        Cursor mCursor = mResolver.query(mVideoTable, mColumns, mSelect, mSelectArgs, MediaStore.Video.Media.DATE_ADDED + " DESC");
-        if (null == mCursor || mCursor.getCount() == 0) {
-            return videoAlbum;
-        } else {
-            mCursor.moveToFirst();
-            AlbumBean videoAlbumAll = new AlbumBean("全部视频", 0, mCursor.getString(mCursor.getColumnIndex(MediaStore.Video.Media.DATA)));
-            videoAlbum.add(0, videoAlbumAll);
-            while (mCursor.moveToNext()) {
-                videoAlbumAll.addCount();
-                String data = mCursor.getString(mCursor.getColumnIndex(MediaStore.Video.Media.DATE_ADDED));
-                String sd = TimeFormat.dataFormat(data);
-                if (temporary.containsKey(sd)) {
-                    temporary.get(sd).addCount();
-                } else {
-                    AlbumBean bean = new AlbumBean(sd, 0, mCursor.getString(mCursor.getColumnIndex(MediaStore.Video.Media.DATA)));
-                    videoAlbum.add(bean);
-                    temporary.put(sd, bean);
-                }
-            }
-        }
-        if (!mCursor.isClosed()) {
-            mCursor.close();
-            mCursor = null;
-        }
-        return videoAlbum;
     }
 
 
