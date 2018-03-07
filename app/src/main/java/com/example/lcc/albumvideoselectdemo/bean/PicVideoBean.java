@@ -7,23 +7,23 @@ package com.example.lcc.albumvideoselectdemo.bean;
 public class PicVideoBean {
     private String path;
     private String videoDuration;
-    private String SelectNumber;
+    private String mPosition;
 
     public PicVideoBean() {
     }
 
-    public PicVideoBean(String path, String videoDuration, String selectNumber) {
+    public PicVideoBean(String path, String videoDuration,String positon) {
         this.path = path;
         this.videoDuration = videoDuration;
-        SelectNumber = selectNumber;
+        this.mPosition=positon;
     }
 
-    public String getSelectNumber() {
-        return SelectNumber;
+    public String getmPosition() {
+        return mPosition;
     }
 
-    public void setSelectNumber(String selectNumber) {
-        SelectNumber = selectNumber;
+    public void setmPosition(String mPosition) {
+        this.mPosition = mPosition;
     }
 
     public String getPath() {
@@ -47,7 +47,6 @@ public class PicVideoBean {
         return "PicVideoBean{" +
                 "path='" + path + '\'' +
                 ", videoDuration='" + videoDuration + '\'' +
-                ", SelectNumber='" + SelectNumber + '\'' +
                 '}';
     }
 }

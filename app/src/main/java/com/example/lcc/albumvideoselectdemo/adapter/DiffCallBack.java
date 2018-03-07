@@ -14,6 +14,7 @@ import java.util.List;
 
 public class DiffCallBack extends DiffUtil.Callback {
     private List<PicVideoBean> mOldDatas, mNewDatas;//看名字
+
     public DiffCallBack(List<PicVideoBean> mOldDatas, List<PicVideoBean> mNewDatas) {
         this.mOldDatas = mOldDatas;
         this.mNewDatas = mNewDatas;
@@ -31,6 +32,16 @@ public class DiffCallBack extends DiffUtil.Callback {
 
     @Override
     public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+        if (mOldDatas.get(oldItemPosition) == null && mNewDatas.get(newItemPosition) != null) {
+            return false;
+        }
+        if (mOldDatas.get(oldItemPosition) != null && mNewDatas.get(newItemPosition) == null) {
+            return false;
+        }
+        if (mOldDatas.get(oldItemPosition) == null && mNewDatas.get(newItemPosition) == null) {
+            return true;
+        }
+
         return mOldDatas.get(oldItemPosition).getPath().equals(mNewDatas.get(newItemPosition).getPath());
     }
 
@@ -38,32 +49,23 @@ public class DiffCallBack extends DiffUtil.Callback {
     public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
         PicVideoBean beanOld = mOldDatas.get(oldItemPosition);
         PicVideoBean beanNew = mNewDatas.get(newItemPosition);
-        if (!beanOld.getPath().equals(beanNew.getPath())) {
-            return false;//如果有内容不同，就返回false
-        }
-//        if (beanOld.getVideoDuration() != beanNew.getVideoDuration()) {
-//            return false;//如果有内容不同，就返回false
-//        }
-        if (!beanOld.getSelectNumber().equals(beanNew.getSelectNumber())) {
-            return false;//如果有内容不同，就返回false
-        }
-        return true; //默认两个data内容是相同的
+        return beanOld.getmPosition().equals(beanNew.getmPosition()); //默认两个data内容是相同的
     }
 
-    @Nullable
-    @Override
-    public Object getChangePayload(int oldItemPosition, int newItemPosition) {
-        String beanOldPath = mOldDatas.get(oldItemPosition).getPath();
-        String beanNewPath = mNewDatas.get(newItemPosition).getPath();
-        String beanOldNumber = mOldDatas.get(oldItemPosition).getSelectNumber();
-        String beanNewNumber = mNewDatas.get(newItemPosition).getSelectNumber();
-        Bundle bundle = new Bundle();
-        if ((beanNewPath == null && beanOldPath !=null) || (beanNewPath != null && beanOldPath == null) || (beanOldPath != null && !beanOldPath.equals(beanNewPath)))
-            bundle.putString("path", beanNewPath);
-        if(!beanOldNumber.equals(beanNewNumber))
-            bundle.putString("number", beanNewNumber);
-        if (bundle.size() == 0)
-            return null;
-        return bundle;
-    }
+//    @Nullable
+//    @Override
+//    public Object getChangePayload(int oldItemPosition, int newItemPosition) {
+//        String beanOldPath = mOldDatas.get(oldItemPosition).getPath();
+//        String beanNewPath = mNewDatas.get(newItemPosition).getPath();
+//        String beanOldNumber = mOldDatas.get(oldItemPosition).getSelectNumber();
+//        String beanNewNumber = mNewDatas.get(newItemPosition).getSelectNumber();
+//        Bundle bundle = new Bundle();
+//        if ((beanNewPath == null && beanOldPath !=null) || (beanNewPath != null && beanOldPath == null) || (beanOldPath != null && !beanOldPath.equals(beanNewPath)))
+//            bundle.putString("path", beanNewPath);
+//        if(!beanOldNumber.equals(beanNewNumber))
+//            bundle.putString("number", beanNewNumber);
+//        if (bundle.size() == 0)
+//            return null;
+//        return bundle;
+//    }
 }

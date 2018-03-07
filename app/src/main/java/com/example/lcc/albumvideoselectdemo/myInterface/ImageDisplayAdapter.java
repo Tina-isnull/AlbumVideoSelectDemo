@@ -13,5 +13,5 @@ public interface ImageDisplayAdapter {
     void onItemClick(int index, String path);
 
     //无法实现联动刷新
-    void notifyDataSetChanged(List<PicVideoBean> mOldDatas, List<PicVideoBean> mNewDatas);
+//    void notifyDataSetChanged(List<PicVideoBean> mOldDatas, List<PicVideoBean> mNewDatas);
 }

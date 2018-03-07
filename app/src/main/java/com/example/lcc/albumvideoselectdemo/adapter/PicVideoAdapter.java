@@ -38,7 +38,6 @@ import java.util.List;
 public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHolderView> {
     private Context context;
     private ArrayList<PicVideoBean> list;
-    private ArrayList<PicVideoBean> newlist;
     //select 1为图片 2为视频
     private int select;
     public static List<String> selectPics = new ArrayList<>();
@@ -46,7 +45,6 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
     private ImageDisplayAdapter adapter;
 
     public PicVideoAdapter(Context context, ArrayList<PicVideoBean> list, int select) {
-        newlist = new ArrayList<>();
         this.context = context;
         this.list = list;
         this.select = select;
@@ -103,24 +101,12 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
                             holder.button.setImageResource(R.drawable.unselect_shape);
                             holder.pic.setColorFilter(null);
                             holder.pager.setText("");
-//                            newlist.clear();
-//                            //数据要重置！！！！
-//                            for(int i=0;i<list.size();i++){
-//                                if(selectPics.contains(list.get(i).getPath())){
-//                                    PicVideoBean bean=new PicVideoBean(list.get(i).getPath(),"",(selectPics.indexOf(list.get(i).getPath())+1)+"");
-//                                    newlist.add(bean);
-//                                }else {
-//                                    PicVideoBean bean=new PicVideoBean(list.get(i).getPath(),"","");
-//                                    newlist.add(bean);
-//                                }
-//                            }
-//                            adapter.notifyDataSetChanged(list, newlist);
                             for (int i = start; i < selectPics1.size(); i++) {
                                 for(int j=1;j<list.size();j++){
                                     if(list.get(j).getPath().equals(selectPics1.get(i).getmPath())){
                                         Bundle bundle = new Bundle();
                                         bundle.putString("number", (selectPics.indexOf(selectPics1.get(i).getmPath()) + 1) + "");
-                                        notifyItemChanged(selectPics1.get(i).getmPotion(), bundle);
+                                        notifyItemChanged(j, bundle);
                                         continue;
                                     }
                                 }
@@ -200,7 +186,7 @@ public class PicVideoAdapter extends RecyclerView.Adapter<PicVideoAdapter.MyHold
         }
     }
 
-    public void setData() {
+    public void setData(ArrayList<PicVideoBean> newlist) {
         list.clear();
         list.addAll(newlist);
     }

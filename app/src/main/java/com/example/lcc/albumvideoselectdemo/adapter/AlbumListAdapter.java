@@ -60,8 +60,6 @@ public class AlbumListAdapter extends BaseAdapter {
         MyApp.getApp().getLoader().setImageResource(datas.get(position).getAlbumPic(), mvh.img);
         mvh.tv.setText(datas.get(position).getName());
         mvh.count.setText(datas.get(position).getCount()+"张照片");
-
-
         return convertView;
     }
 

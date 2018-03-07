@@ -1,15 +1,9 @@
 package com.example.lcc.albumvideoselectdemo;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -17,24 +11,18 @@ import android.os.Bundle;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.lcc.albumvideoselectdemo.adapter.AlbumListAdapter;
 import com.example.lcc.albumvideoselectdemo.adapter.BigPicAdapter;
 import com.example.lcc.albumvideoselectdemo.adapter.DiffCallBack;
-import com.example.lcc.albumvideoselectdemo.adapter.DisplayImageViewAdapter;
 import com.example.lcc.albumvideoselectdemo.adapter.PicVideoAdapter;
 import com.example.lcc.albumvideoselectdemo.bean.AlbumBean;
 import com.example.lcc.albumvideoselectdemo.bean.PicVideoBean;
@@ -42,14 +30,10 @@ import com.example.lcc.albumvideoselectdemo.bean.TemBean;
 import com.example.lcc.albumvideoselectdemo.myInterface.ImageDisplayAdapter;
 import com.example.lcc.albumvideoselectdemo.utils.DataHelper;
 import com.example.lcc.albumvideoselectdemo.utils.MyApp;
-
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import cn.jzvd.JZVideoPlayer;
-import cn.jzvd.JZVideoPlayerStandard;
 
 public class PicVideoSelectActivity extends AppCompatActivity implements DataHelper.getPicOrVideoListener, PopupWindow.OnDismissListener {
     private RecyclerView mRecyclerView;
@@ -58,10 +42,11 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     private TextView text_title;
     private TextView text_other;
     private ArrayList<PicVideoBean> lists;
+    private ArrayList<PicVideoBean> lists1 = new ArrayList<>();
     private ArrayList<AlbumBean> Albums;
     private DataHelper helper;
     private int mSelect;
-    private Button mFinish;
+    private TextView mFinish;
     private PopupWindow mPopwindow;
     private PopupWindow mPopwindow_pic;
     private AlbumListAdapter adapter;
@@ -70,7 +55,8 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     private ArrayList<PicVideoBean> bigPicList;
     private List<Integer> refreshList = new ArrayList<>();
     private final int MSG_WHAT_CHAT_UPDATE = 0x1;
-    //本来想用来局部刷新的，但是有更简单的办法了
+    private String title = "最近相册";
+    //切换相册用的局部刷新
     private Handler updateChatsHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -79,8 +65,8 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
                     DiffUtil.DiffResult result = (DiffUtil.DiffResult) msg.obj;
                     //界面更新
                     result.dispatchUpdatesTo(mAdapter);
-                    mAdapter.setData();
-
+//                    mAdapter.setData(lists);
+                    lists1.clear();
             }
         }
     };
@@ -100,7 +86,7 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
         text_back = (TextView) findViewById(R.id.text_back);
         text_title = (TextView) findViewById(R.id.text_title);
         text_other = (TextView) findViewById(R.id.text_other);
-        mFinish = (Button) findViewById(R.id.btn_finish);
+        mFinish = (TextView) findViewById(R.id.btn_finish);
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_id);
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
 
@@ -172,22 +158,7 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
                 }
             }
 
-            //局部刷新，不用了
-            @Override
-            public void notifyDataSetChanged(final List<PicVideoBean> mOldDatas, final List<PicVideoBean> mNewDatas) {
-                //为了防止数据量过大，比对算法耗时，将算法放入新线程执行
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffCallBack(mOldDatas, mNewDatas), true);
-                        Message message = updateChatsHandler.obtainMessage(MSG_WHAT_CHAT_UPDATE);
-                        message.obj = result;
-                        message.sendToTarget();
-                    }
-                }).start();
 
-
-            }
         });
     }
 
@@ -195,33 +166,59 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     @Override
     public void getPicOrVideo(ArrayList<PicVideoBean> bean) {
         //占第一位
+        lists1.addAll(lists);
         lists.clear();
-        PicVideoBean bean1 = new PicVideoBean();
+        PicVideoBean bean1 = new PicVideoBean("", "",0+"");
         lists.addAll(bean);
         lists.add(0, bean1);
+        notifyDataSetChanged(lists1, lists);
         //为查看大图赋值
         if (mSelect == 1) {
+            bigPicList.clear();
             bigPicList.addAll(lists);
             bigPicList.remove(0);
         }
-        mAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void getPicOrVideo(Map<String, Object> bean) {
         Albums.clear();
         Albums.addAll((ArrayList<AlbumBean>) bean.get("album"));
-
-        //占第一位
-        lists.clear();
-        PicVideoBean bean1 = new PicVideoBean("", "", "");
-        ArrayList<PicVideoBean> picList = (ArrayList<PicVideoBean>) bean.get("pic");
-        lists.addAll(picList);
-        lists.add(0, bean1);
+        //当list为空的时候，说明是第一次进入，因为有null的情况，会导致项目崩溃
+        if (lists == null || lists.size() == 0) {
+            PicVideoBean bean1 = new PicVideoBean("", "",0+"");
+            ArrayList<PicVideoBean> picList = (ArrayList<PicVideoBean>) bean.get("pic");
+            lists.addAll(picList);
+            lists.add(0, bean1);
+            mAdapter.notifyDataSetChanged();
+        } else {
+            //占第一位
+            lists1.addAll(lists);
+            lists.clear();
+            PicVideoBean bean1 = new PicVideoBean("", "",0+"");
+            ArrayList<PicVideoBean> picList = (ArrayList<PicVideoBean>) bean.get("pic");
+            lists.addAll(picList);
+            lists.add(0, bean1);
+            notifyDataSetChanged(lists1, lists);
+        }
         //为大图赋值
+        bigPicList.clear();
         bigPicList.addAll(lists);
         bigPicList.remove(0);
-        mAdapter.notifyDataSetChanged();
+    }
+
+    //局部刷新，不用了
+    public void notifyDataSetChanged(final List<PicVideoBean> mOldDatas, final List<PicVideoBean> mNewDatas) {
+        //为了防止数据量过大，比对算法耗时，将算法放入新线程执行
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffCallBack(mOldDatas, mNewDatas), true);
+                Message message = updateChatsHandler.obtainMessage(MSG_WHAT_CHAT_UPDATE);
+                message.obj = result;
+                message.sendToTarget();
+            }
+        }).start();
 
 
     }
@@ -237,7 +234,8 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                text_title.setText(Albums.get(position).getName());
+                title = Albums.get(position).getName();
+                text_title.setText(title);
                 if (Albums.get(position).getName().equals("最近相册")) {
                     helper.getPic(PicVideoSelectActivity.this);
                 } else {
@@ -293,13 +291,42 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
         final TextView checkbox_sel_num = (TextView) view.findViewById(R.id.pager_select);//已选相册的序数
         final TextView complete = (TextView) view.findViewById(R.id.pre_tv_to_confirm);//完成数量
         final ImageView mCheckBox = (ImageView) view.findViewById(R.id.button_id);
+        ImageView backImg = (ImageView) view.findViewById(R.id.pre_head_view_back);
+        TextView backText = (TextView) view.findViewById(R.id.pre_head_view_back_t);
+        TextView titleText = (TextView) view.findViewById(R.id.pre_head_view_title);
+        titleText.setText(title);
+        backImg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mPopwindow_pic.isShowing()) {
+                    mPopwindow_pic.dismiss();
+                }
+
+            }
+        });
+        backText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mPopwindow_pic.isShowing()) {
+                    mPopwindow_pic.dismiss();
+                }
+            }
+        });
+        complete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mPopwindow_pic.isShowing()) {
+                    mPopwindow_pic.dismiss();
+                }
+            }
+        });
         updateCountView(complete);
         mViewPager.setAdapter(mBigPicAdapter1);
         mViewPager.setCurrentItem(position - 1, true);
-        if (mAdapter.selectPics.contains(bigPicList.get(position-1).getPath())) {
+        if (mAdapter.selectPics.contains(bigPicList.get(position - 1).getPath())) {
             mCheckBox.setImageResource(R.drawable.select_shape);
             checkbox_sel_num.setVisibility(View.VISIBLE);
-            checkbox_sel_num.setText(String.valueOf(mAdapter.selectPics.indexOf(bigPicList.get(position-1).getPath()) + 1));
+            checkbox_sel_num.setText(String.valueOf(mAdapter.selectPics.indexOf(bigPicList.get(position - 1).getPath()) + 1));
         } else {
             mCheckBox.setImageResource(R.drawable.unselect_shape);
             checkbox_sel_num.setVisibility(View.INVISIBLE);
@@ -412,11 +439,11 @@ public class PicVideoSelectActivity extends AppCompatActivity implements DataHel
     @Override
     public void onDismiss() {
         for (int i = 0; i < mAdapter.selectPics.size(); i++) {
-            for(int j=1;j<lists.size();j++){
-                if(lists.get(j).getPath().equals( mAdapter.selectPics.get(i))){
+            for (int j = 1; j < lists.size(); j++) {
+                if (lists.get(j).getPath().equals(mAdapter.selectPics.get(i))) {
                     Bundle bundle = new Bundle();
                     bundle.putString("number", (mAdapter.selectPics.indexOf(mAdapter.selectPics1.get(i).getmPath()) + 1) + "");
-                    mAdapter.notifyItemChanged(mAdapter.selectPics1.get(i).getmPotion(), bundle);
+                    mAdapter.notifyItemChanged(j, bundle);
                     continue;
                 }
             }

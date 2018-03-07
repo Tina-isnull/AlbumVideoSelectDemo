@@ -40,6 +40,7 @@ public class DataLoader {
 
     /**
      * 获得所有图片／以及相册
+     *
      * @return
      */
     public Map<String, Object> getPics1() {
@@ -60,13 +61,12 @@ public class DataLoader {
             mCursor.moveToFirst();
             AlbumBean AlbumPicAll = new AlbumBean("最近相册", 0, mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA)));
             list.add(0, AlbumPicAll);
-
+            int i = 1;
             for (mCursor.moveToFirst(); !mCursor.isAfterLast(); mCursor.moveToNext()) {
-                PicVideoBean data = new PicVideoBean();
+                PicVideoBean data = new PicVideoBean("", "", "");
                 String path = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA));
                 data.setPath(path);
-                //防止局部更新中出现空指针
-                data.setSelectNumber("");
+                data.setmPosition(i + "");
                 pics.add(data);
                 String AlbumName = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME));
                 AlbumPicAll.addCount();
@@ -77,8 +77,7 @@ public class DataLoader {
                     temporary.put(AlbumName, bean);
                     list.add(bean);
                 }
-
-
+                i++;
             }
             map.put("pic", pics);
             map.put("album", list);
@@ -106,16 +105,17 @@ public class DataLoader {
         //筛选的条件值
         String[] mSelectArgs1 = {"image/jpeg", "image/png", "image/webp", String.valueOf(PIC_SMALL_SIZE), albumName};
         mCursor = mResolver.query(mPicTable, mColumns, mSelect1, mSelectArgs1, MediaStore.Images.Media.DATE_ADDED + " DESC");
-
+        int i = 1;
         if (mCursor != null && mCursor.getCount() != 0) {
 //            mCursor.moveToFirst();
             while (mCursor.moveToNext()) {
                 PicVideoBean bean = new PicVideoBean();
                 String path = mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA));
                 bean.setPath(path);
+                bean.setmPosition(i+"");
                 pics.add(bean);
+                i++;
             }
-
         } else {
             return pics;
         }

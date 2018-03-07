@@ -69,7 +69,6 @@ public class DataHelper {
             @Override
             public void run() {
                 final ArrayList<PicVideoBean> pics = loader.getAlbumPics(name);
-                Log.d("Tina====>",pics.toString());
                 if (null != pics && pics.size() != 0) {
                     handler.post(new Runnable() {
                         @Override

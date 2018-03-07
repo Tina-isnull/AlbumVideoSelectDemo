@@ -18,8 +18,10 @@
         >
 
     </android.support.v7.widget.RecyclerView>
-    <Button
+    <TextView
         android:id="@+id/btn_finish"
+        android:textColor="#ffffff"
+        android:background="@color/colorAccent"
         android:layout_width="match_parent"
         android:layout_alignParentBottom="true"
         android:layout_height="50dp"
